@@ -11,7 +11,7 @@ namespace BloobsTweaks
     {
         public const string Guid = "zeldo.bloobs.tweaks";
         public const string Name = "Bloobs Tweaks";
-        public const string Version = "1.20.2";
+        public const string Version = "1.20.3";
 
         internal static ManualLogSource Log;
 

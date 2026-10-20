@@ -251,4 +251,52 @@ namespace BloobsTweaks
             __result = __instance.bankSystem.CanAddItem(itemName, Math.Max(1, quantity));
         }
     }
+
+    // Smithing (every item, in Smith) and imbuing (StartImbuing) also demand a completely free inventory slot,
+    // even when the output already has a stack in the bag - so with a full bag they can't run at all. While one
+    // of those runs, the free-slot check passes when the output does have somewhere to go: a stack in the bag,
+    // or room in the bank for overflow-to-bank to put it. HasFreeInventorySlots is left alone everywhere else
+    // (equipment swaps, stores, ...).
+    [HarmonyPatch]
+    internal static class CraftFreeSlotPatch
+    {
+        private static bool _allow;
+
+        [HarmonyPatch(typeof(SmithingSkill), "Smith")]
+        [HarmonyPrefix]
+        static void Smith(SmithingSkill __instance, RecipeSmithing recipeSmithing) =>
+            _allow = recipeSmithing != null && OutputHasRoom(__instance.inventorySystem, recipeSmithing.outputItemName);
+
+        [HarmonyPatch(typeof(ImbuingSkill), nameof(ImbuingSkill.StartImbuing))]
+        [HarmonyPrefix]
+        static void Imbue(ImbuingSkill __instance, RecipeImbuing recipeImbuing) =>
+            _allow = recipeImbuing != null && OutputHasRoom(__instance.inventorySystem, recipeImbuing.outputItemName);
+
+        [HarmonyPatch(typeof(SmithingSkill), "Smith")]
+        [HarmonyFinalizer]
+        static void SmithDone() => _allow = false;
+
+        [HarmonyPatch(typeof(ImbuingSkill), nameof(ImbuingSkill.StartImbuing))]
+        [HarmonyFinalizer]
+        static void ImbueDone() => _allow = false;
+
+        [HarmonyPatch(typeof(InventorySystem), nameof(InventorySystem.HasFreeInventorySlots))]
+        [HarmonyPostfix]
+        static void FreeSlots(ref bool __result)
+        {
+            if (_allow)
+                __result = true;
+        }
+
+        private static bool OutputHasRoom(InventorySystem inventory, string output)
+        {
+            if (!Plugin.OverflowEnabled.Value || inventory == null || string.IsNullOrEmpty(output))
+                return false;
+            foreach (var item in inventory.inventoryItems)
+                if (!inventory.IsPlaceholder(item) && item.itemName == output)
+                    return true;
+            var bank = inventory.bankSystem;
+            return bank != null && bank.IsReady && bank.CanAddItem(output, 1);
+        }
+    }
 }
