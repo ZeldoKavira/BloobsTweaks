@@ -35,7 +35,12 @@ namespace BloobsTweaks
         private static IEnumerator ClaimNextFrame(MonoBehaviour resource, Func<bool> isGlowing, Action claim)
         {
             yield return null;
-            if (resource == null || !Plugin.AutoGoldenEnabled.Value || !isGlowing())
+            // The reward goes into the inventory, which right after loading a save isn't set up yet. Wait for it
+            // (a glow lasts several seconds) rather than claiming into a half-built inventory.
+            var until = Time.unscaledTime + 5f;
+            while (!InventoryReady() && Time.unscaledTime < until)
+                yield return null;
+            if (resource == null || !Plugin.AutoGoldenEnabled.Value || !isGlowing() || !InventoryReady())
                 yield break;
             try
             {
@@ -47,6 +52,12 @@ namespace BloobsTweaks
             {
                 Plugin.Log.LogWarning($"Auto-claim of golden {resource.GetType().Name} failed: {e}");
             }
+        }
+
+        private static bool InventoryReady()
+        {
+            var inventory = Scene.Find<InventorySystem>();
+            return inventory != null && inventory.inventoryItems != null && inventory.inventoryItems.Count >= inventory.maxInventorySize;
         }
 
         [HarmonyPatch(typeof(Trees), nameof(Trees.ApplyGlow))]

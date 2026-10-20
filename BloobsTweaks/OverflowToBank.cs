@@ -38,6 +38,11 @@ namespace BloobsTweaks
             if (string.IsNullOrEmpty(itemName) || quantity <= 0)
                 return true;
 
+            // While the save is still loading the slot list hasn't been filled out to its size yet (the game's own
+            // FindFirstPlaceholderIndex would read past its end); stay out of the way until it has.
+            if (__instance.inventoryItems == null || __instance.inventoryItems.Count < __instance.maxInventorySize)
+                return true;
+
             // Same tests the original makes: stack onto an existing entry, else take the first free slot.
             foreach (var item in __instance.inventoryItems)
                 if (!__instance.IsPlaceholder(item) && item.itemName == itemName)
