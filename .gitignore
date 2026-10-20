@@ -1,0 +1,9 @@
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.zip
+
+# Fetched on demand by refs/strip-assembly.ps1
+refs/tools/
