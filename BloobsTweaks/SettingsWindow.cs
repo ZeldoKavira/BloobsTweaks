@@ -327,7 +327,8 @@ namespace BloobsTweaks
 
             Heading(c, "Smoothing");
             ToggleRow(c, Plugin.SmoothHighSpeed, "Smooth camera, animations and popups at high speed");
-            ToggleRow(c, Plugin.SkillCatchUp, "Let gathering skills keep up with high speeds");
+            ToggleRow(c, Plugin.SkillCatchUp, "Let skills keep up with high speeds");
+            Note(c, "Gathering, thieving, crafting, firemaking, combat, tracking, devotion and courses otherwise manage one action per frame.");
             var fpsHint = Note(c, "");
 
             _refreshers.Add(() =>

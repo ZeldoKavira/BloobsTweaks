@@ -11,7 +11,7 @@ namespace BloobsTweaks
     {
         public const string Guid = "zeldo.bloobs.tweaks";
         public const string Name = "Bloobs Tweaks";
-        public const string Version = "1.19.0";
+        public const string Version = "1.20.0";
 
         internal static ManualLogSource Log;
 
@@ -136,7 +136,7 @@ namespace BloobsTweaks
                 "While the game runs faster than normal: glide the camera instead of snapping, play the Bloob's and enemies' " +
                 "animations at normal speed, and keep XP/damage/loot popups up for their usual real-time duration.");
             SkillCatchUp = Config.Bind("GameSpeed", "GatheringCatchUp", true,
-                "Woodcutting, mining, fishing, foraging and thieving normally do at most one action per frame, which caps them " +
+                "Skills normally manage at most one action per frame (gathering, thieving, crafting, firemaking, combat, tracking, devotion, courses), which caps them " +
                 "well below high speed settings. This runs the actions owed for each frame so they keep up with the game speed.");
             // Earlier versions shipped defaults of 10 and 50; move anyone still on one of those to the new default.
             if (Mathf.Approximately(SpeedMax.Value, 10f) || Mathf.Approximately(SpeedMax.Value, 50f))

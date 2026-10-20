@@ -49,7 +49,9 @@ namespace BloobsTweaks
                 s.TargetF = AccessTools.Field(s.Skill, s.Target);
                 s.ActionM = AccessTools.Method(s.Skill, s.Action);
                 s.SwarmF = s.Skill == typeof(FishingSkill) ? AccessTools.Field(s.Skill, "isFishingSwarm") : null;
-                s.WorkableM = (MemberInfo)AccessTools.Property(s.Node, s.Workable) ?? AccessTools.Field(s.Node, s.Workable);
+                const BindingFlags any = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+                // Plain reflection: AccessTools logs a warning for every miss, and these are a property on some nodes, a field on others.
+                s.WorkableM = (MemberInfo)s.Node.GetProperty(s.Workable, any) ?? s.Node.GetField(s.Workable, any);
                 var update = AccessTools.Method(s.Skill, "Update");
                 if (s.TimerF == null || s.SpeedF == null || s.TargetF == null || s.ActionM == null || s.WorkableM == null || update == null)
                 {
