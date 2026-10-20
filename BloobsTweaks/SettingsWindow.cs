@@ -224,6 +224,7 @@ namespace BloobsTweaks
             ToggleRow(c, Plugin.EatFromBank, "Auto-eat uses food from the bank when you run out");
             ToggleRow(c, Plugin.UnlimitedAutoManage, "No limit on the auto-sell / auto-bank list");
             Note(c, "Selling speed is unchanged. Turning this off makes the game drop list entries beyond its normal limit.");
+            ToggleRow(c, Plugin.KeepOneByDefault, "New auto-sell / auto-bank entries keep 1");
             var keep = Note(c, "");
             _refreshers.Add(() => keep.text =
                 $"Keep 1: click an item's name in the auto-sell / auto-bank list to always leave one in your bag. Marked: <color=yellow>{KeepOne.Items.Count}</color>");

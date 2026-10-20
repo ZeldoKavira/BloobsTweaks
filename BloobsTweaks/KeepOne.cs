@@ -105,6 +105,27 @@ namespace BloobsTweaks
         [HarmonyPrefix]
         static void CapBank(InventorySystem __instance, List<(string itemName, int quantity)> itemsToBank) => Cap(__instance, itemsToBank);
 
+        // --- New entries start as "keep 1" ----------------------------------------------------------------
+        // Items the player adds go through AddItemToAutoManageInternal; loading the saved list uses a separate
+        // method, so existing entries keep whatever they were set to.
+
+        [HarmonyPatch(typeof(SoulCompendiumManager), "AddItemToAutoManageInternal")]
+        [HarmonyPrefix]
+        static void BeforeAdd(SoulCompendiumManager __instance, string itemName, out bool __state) =>
+            __state = itemName != null && __instance.autoEntries.ContainsKey(itemName);
+
+        [HarmonyPatch(typeof(SoulCompendiumManager), "AddItemToAutoManageInternal")]
+        [HarmonyPostfix]
+        static void AfterAdd(SoulCompendiumManager __instance, string itemName, bool __state)
+        {
+            if (__state || !Plugin.KeepOneByDefault.Value || itemName == null ||
+                !__instance.autoEntries.TryGetValue(itemName, out var entry) || Items.Contains(itemName))
+                return;
+            Toggle(itemName);
+            var text = entry != null ? NameText(entry) : null;
+            text?.GetComponent<KeepOneClick>()?.Refresh();
+        }
+
         // --- List UI: click the name to toggle ------------------------------------------------------------
 
         private static readonly AccessTools.FieldRef<AutoManageEntry, TMP_Text> NameText =

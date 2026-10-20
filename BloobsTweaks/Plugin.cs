@@ -11,7 +11,7 @@ namespace BloobsTweaks
     {
         public const string Guid = "zeldo.bloobs.tweaks";
         public const string Name = "Bloobs Tweaks";
-        public const string Version = "1.22.0";
+        public const string Version = "1.22.1";
 
         internal static ManualLogSource Log;
 
@@ -29,6 +29,7 @@ namespace BloobsTweaks
         internal static ConfigEntry<bool> EatFromBank;
         internal static ConfigEntry<bool> UnlimitedAutoManage;
         internal static ConfigEntry<string> KeepOneItems;
+        internal static ConfigEntry<bool> KeepOneByDefault;
         internal static ConfigEntry<bool> InfiniteResources;
         internal static ConfigEntry<bool> LootShowTotals;
 
@@ -94,6 +95,8 @@ namespace BloobsTweaks
             KeepOneItems = Config.Bind("Bank", "KeepOneItems", "",
                 "Items the auto-sell / auto-bank list always leaves one of in the inventory, separated by |. " +
                 "Toggle them in game by clicking an item's name in the auto-manage list.");
+            KeepOneByDefault = Config.Bind("Bank", "KeepOneByDefault", true,
+                "Items newly added to the auto-sell / auto-bank list start marked 'keep 1'. Existing entries are left as they are.");
             LootShowTotals = Config.Bind("Bank", "PickupShowsTotals", true,
                 "Add how many you now have in your bag and bank to 'Picked up' notes (item pickups and every gathering skill).");
 
