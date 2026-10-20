@@ -114,7 +114,7 @@ namespace BloobsTweaks
                 else
                     playerDataManager.Instance.GetSavedGlobalEquipment().Remove(item);
                 es.equipmentUI.ClearItemImage(s);
-                Quiet(() => bank.AddItem(item.itemName, 1, item.commonImage, item.value, item.hpvalue, item.requiredWoodcuttingLevel,
+                Quiet(() => bank.AddItem(item.itemName, 1, Icon(item.itemName, item.commonImage), item.value, item.hpvalue, item.requiredWoodcuttingLevel,
                     item.requiredMiningLevel, item.requiredFishingLevel, item.requiredForagingLevel, item.requiredAttackLevel,
                     item.requiredMagicLevel, item.requiredRangeLevel, item.requiredDefenceLevel, item.requiredHomesteadingLevel,
                     item.accuracy, item.damage, item.damageReduction, item.progress, item.rangeDamage, item.magicDamage,
@@ -122,14 +122,17 @@ namespace BloobsTweaks
                     item.woodcuttingBonusXp, item.trackingBonusXp, item.runSpeed, allowAutoSort: false));
             }
 
-            var p = piece;
+            // Copy the entry before taking it: removing the last one blanks that slot (icon included), and reading
+            // the icon afterwards is what turned equipped items into white boxes.
+            var p = new Piece { From = piece.From, Data = CloneMethod.Invoke(piece.Data, null) };
             var name = p.Name;
+            var icon = Icon(name, p.Get<Sprite>("commonImage"));
             if (p.From == Source.Inventory)
                 inventory.RemoveItem(name, 1);
             else if (p.From == Source.Bank)
                 Quiet(() => bank.RemoveItem(name, 1));
 
-            var equipped = es.AddItem(name, 1, p.Get<Sprite>("commonImage"), p.Get<int>("value"), p.Get<int>("hpvalue"),
+            var equipped = es.AddItem(name, 1, icon, p.Get<int>("value"), p.Get<int>("hpvalue"),
                 p.Get<int>("requiredWoodcuttingLevel"), p.Get<int>("requiredMiningLevel"), p.Get<int>("requiredFishingLevel"),
                 p.Get<int>("requiredForagingLevel"), p.Get<int>("requiredAttackLevel"), p.Get<int>("requiredMagicLevel"),
                 p.Get<int>("requiredRangeLevel"), p.Get<int>("requiredDefenceLevel"), p.Get<int>("requiredHomesteadingLevel"),
@@ -142,6 +145,27 @@ namespace BloobsTweaks
 
             Plugin.Log.LogWarning($"Equipping {name} failed; it stays in the bank");
             return false;
+        }
+
+        private static readonly MethodInfo CloneMethod =
+            typeof(object).GetMethod("MemberwiseClone", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        private static Dictionary<string, Sprite> _icons;
+
+        // An entry's own icon if it has one; otherwise the item's icon by name. Icons aren't saved - the game fills
+        // them back in gradually after loading - so an entry can briefly have none.
+        private static Sprite Icon(string name, Sprite current)
+        {
+            if (current != null || string.IsNullOrEmpty(name))
+                return current;
+            if (_icons == null)
+            {
+                _icons = new Dictionary<string, Sprite>();
+                foreach (var item in Item.GetAllItems())
+                    if (item != null && !string.IsNullOrEmpty(item.itemName) && item.commonImage != null && !_icons.ContainsKey(item.itemName))
+                        _icons[item.itemName] = item.commonImage;
+            }
+            return _icons.TryGetValue(name, out var icon) ? icon : null;
         }
 
         private static void Quiet(Action bankAction)
