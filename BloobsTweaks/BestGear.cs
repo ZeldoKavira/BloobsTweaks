@@ -172,19 +172,34 @@ namespace BloobsTweaks
                 if (inventory == null || bank == null || !bank.IsReady || es == null || es.IsSlotLocked() || playerDataManager.Instance == null)
                     return;
                 var have = level(playerDataManager.Instance);
-                bool Usable(Piece p) => EquipmentSystem.GetEquipmentSlotForItemStatic(p.Name) == slot && p.Get<int>(levelField) <= have;
+                // Rank exactly as the game's UseBest* does: by the item asset of that name, not the copy stored in
+                // the inventory/bank, whose progress and level fields can be 0 (e.g. for shop-bought tools).
+                var assets = new Dictionary<string, Item>();
+                foreach (var a in Resources.FindObjectsOfTypeAll<Item>())
+                    if (a != null && !assets.ContainsKey(a.name))
+                        assets[a.name] = a; // the game takes the first asset with the name, too
+                Item Asset(Piece p) => p.Name != null && assets.TryGetValue(p.Name, out var a) ? a : null;
+                int Progress(Piece p) => Asset(p) is Item a ? a.progress : p.Get<int>("progress");
+                bool Usable(Piece p)
+                {
+                    if (EquipmentSystem.GetEquipmentSlotForItemStatic(p.Name) != slot)
+                        return false;
+                    var a = Asset(p);
+                    var need = a != null ? Fields.Read<int>(a, levelField) : p.Get<int>(levelField);
+                    return need <= have;
+                }
 
-                var best = Owned(inventory, null, es).Where(Usable).Select(p => p.Get<int>("progress")).DefaultIfEmpty(0).Max();
+                var best = Owned(inventory, null, es).Where(Usable).Select(Progress).DefaultIfEmpty(0).Max();
                 if (es.globalEquipment.TryGetValue(slot, out var worn) && worn != null)
                 {
                     var wornPiece = new Piece { From = Source.Equipped, Data = worn };
                     if (Usable(wornPiece))
-                        best = Math.Max(best, worn.progress);
+                        best = Math.Max(best, Progress(wornPiece));
                 }
 
                 var fromBank = Owned(inventory, bank, es).Where(p => p.From == Source.Bank && Usable(p))
-                    .OrderByDescending(p => p.Get<int>("progress")).FirstOrDefault();
-                if (fromBank == null || fromBank.Get<int>("progress") <= best)
+                    .OrderByDescending(Progress).FirstOrDefault();
+                if (fromBank == null || Progress(fromBank) <= best)
                     return;
                 var name = fromBank.Name;
                 if (Equip(fromBank, slot, es, inventory, bank))
