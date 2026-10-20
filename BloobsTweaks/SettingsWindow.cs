@@ -171,6 +171,7 @@ namespace BloobsTweaks
             AddPage("Combat", BuildCombat);
             AddPage("Challenges", BuildChallenges);
             AddPage("Speed", BuildSpeed);
+            AddPage("Launch", BuildLaunch);
             ShowTab(0);
         }
 
@@ -290,6 +291,43 @@ namespace BloobsTweaks
                 status.text = UntrackedChallenges.Unlocked
                     ? $"Active: covers tiers 1-{level + 1} (Auto Progress level {level}) and repeatables. Progress added this session: <color=yellow>{UntrackedChallenges.Applied}</color>"
                     : "Inactive: needs Auto Navigate + Start and Auto Progress switched on.";
+            });
+        }
+
+        private static readonly (int Slot, string Label)[] LaunchSlots =
+            { (-1, "Last played"), (0, "Save 1"), (1, "Save 2"), (2, "Save 3"), (3, "Turbo") };
+
+        private void BuildLaunch(RectTransform c)
+        {
+            Heading(c, "Launch");
+            ToggleRow(c, Plugin.AutoLoadEnabled, "Load a save automatically when the game starts");
+            Note(c, "Only on the first trip to the menu after launching. Never starts a new game. Hold Shift while the menu appears to stay on it.");
+
+            Body(c, "Which save:");
+            var grid = Rect("Slots", c);
+            var layout = grid.gameObject.AddComponent<GridLayoutGroup>();
+            layout.cellSize = new Vector2(140f, 44f);
+            layout.spacing = new Vector2(10f, 10f);
+            layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            layout.constraintCount = 3;
+            foreach (var (slot, label) in LaunchSlots)
+            {
+                var value = slot;
+                var button = MakeButton(Rect(label, grid), label, 20f);
+                button.onClick.AddListener(() => Plugin.AutoLoadSlot.Value = value);
+                _refreshers.Add(() =>
+                {
+                    var colors = button.colors;
+                    colors.normalColor = Plugin.AutoLoadSlot.Value == value ? TabActive : Color.white;
+                    button.colors = colors;
+                });
+            }
+
+            var last = Note(c, "");
+            _refreshers.Add(() =>
+            {
+                var s = Plugin.AutoLoadLastSlot.Value;
+                last.text = s < 0 ? "Last played: none recorded yet." : $"Last played: <color=yellow>{(s == 3 ? "Turbo" : $"Save {s + 1}")}</color>";
             });
         }
 

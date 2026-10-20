@@ -11,7 +11,7 @@ namespace BloobsTweaks
     {
         public const string Guid = "zeldo.bloobs.tweaks";
         public const string Name = "Bloobs Tweaks";
-        public const string Version = "1.20.3";
+        public const string Version = "1.21.0";
 
         internal static ManualLogSource Log;
 
@@ -53,6 +53,10 @@ namespace BloobsTweaks
         internal static ConfigEntry<float> SpeedMax;
         internal static ConfigEntry<bool> SmoothHighSpeed;
         internal static ConfigEntry<bool> SkillCatchUp;
+
+        internal static ConfigEntry<bool> AutoLoadEnabled;
+        internal static ConfigEntry<int> AutoLoadSlot;
+        internal static ConfigEntry<int> AutoLoadLastSlot;
 
         private void Awake()
         {
@@ -138,6 +142,15 @@ namespace BloobsTweaks
             SkillCatchUp = Config.Bind("GameSpeed", "GatheringCatchUp", true,
                 "Skills normally manage at most one action per frame (gathering, thieving, crafting, firemaking, combat, tracking, devotion, courses), which caps them " +
                 "well below high speed settings. This runs the actions owed for each frame so they keep up with the game speed.");
+
+            AutoLoadEnabled = Config.Bind("Launch", "AutoLoadSave", false,
+                "Load a save as soon as the main menu appears after launching. Hold Shift while the menu appears to skip it. " +
+                "Never starts a new game: a slot without a save is left alone.");
+            AutoLoadSlot = Config.Bind("Launch", "AutoLoadSlot", -1,
+                "Which save to load: -1 = the last one played, 0-2 = Save 1-3, 3 = Turbo Mode.");
+            AutoLoadLastSlot = Config.Bind("Launch", "LastPlayedSlot", -1,
+                "Set by the mod whenever a save is loaded; used when AutoLoadSlot is -1.");
+
             // Earlier versions shipped defaults of 10 and 50; move anyone still on one of those to the new default.
             if (Mathf.Approximately(SpeedMax.Value, 10f) || Mathf.Approximately(SpeedMax.Value, 50f))
                 SpeedMax.Value = 200f;
@@ -168,6 +181,7 @@ namespace BloobsTweaks
             host.AddComponent<AutoRefight>();
             host.AddComponent<FastestBootsWatcher>();
             host.AddComponent<ItemUsesWarmup>();
+            host.AddComponent<AutoLoadSave>();
             host.AddComponent<SettingsWindow>();
 
             Log.LogInfo($"{Name} {Version} loaded");
